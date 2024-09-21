@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AddTransactionActivity">
+
+    <ImageButton
+        android:id="@+id/close"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="10dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="59dp"
+        android:src="@drawable/ic_close"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/amountLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:hint="Amount"
+            app:errorEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amountInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_rupee"
+                android:drawablePadding="12dp"
+                android:inputType="numberDecimal"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/labelLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:hint="Notes"
+            app:errorEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/labelInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_label"
+                android:drawablePadding="12dp"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <Spinner
+                android:id="@+id/typeSpinner"
+                style="@style/Widget.AppCompat.DropDownItem.Spinner"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="10dp"
+                android:entries="@array/transaction_types"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/labelLayout" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:gravity="center"-->
+<!--            android:orientation="horizontal">-->
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/launchCred"-->
+<!--                android:layout_width="72dp"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:layout_margin="5dp"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:backgroundTint="@android:color/darker_gray"-->
+<!--                android:scaleType="centerInside"-->
+<!--                android:src="@drawable/ic_cred" />-->
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/launchGpay"-->
+<!--                android:layout_width="72dp"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:layout_margin="5dp"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:backgroundTint="@android:color/darker_gray"-->
+<!--                android:scaleType="centerInside"-->
+<!--                android:src="@drawable/ic_gpay" />-->
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/launchPhonePe"-->
+<!--                android:layout_width="72dp"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:layout_margin="5dp"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:backgroundTint="@android:color/darker_gray"-->
+<!--                android:scaleType="centerInside"-->
+<!--                android:src="@drawable/ic_phonepe" />-->
+<!--        </LinearLayout>-->
+
+        <Button
+            android:id="@+id/scanQRButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="@string/pay_through_upi" />
+
+        <Button
+            android:id="@+id/addTransaction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="@string/add_transaction_expense" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

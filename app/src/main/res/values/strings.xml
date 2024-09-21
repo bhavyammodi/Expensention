@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Expensention</string>
+    <string name="add_transaction_expense">Pay through Cash</string>
+    <string name="add_transaction_income">Add Transaction</string>
+    <string name="pay_through_upi">Pay through UPI</string>
+    <string-array name="transaction_types">
+        <item>Expense</item>
+        <item>Income</item>
+    </string-array>
+</resources>
