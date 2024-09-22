@@ -43,8 +43,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     // ZXing QR code scanner dependencies
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.3.0")
+    implementation("io.github.g00fy2.quickie:quickie-bundled:1.10.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

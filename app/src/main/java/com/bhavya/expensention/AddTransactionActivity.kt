@@ -5,24 +5,53 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.AdapterView
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.Spinner
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import com.google.android.material.internal.ViewUtils.showKeyboard
-import com.google.zxing.integration.android.IntentIntegrator
-import com.google.zxing.integration.android.IntentResult
+import io.github.g00fy2.quickie.QRResult
+import io.github.g00fy2.quickie.ScanQRCode
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class AddTransactionActivity : AppCompatActivity() {
     private val amountParam = "am"
     private val noteParam = "tn"
+
+    private val scanQRCodeLauncher = registerForActivityResult(ScanQRCode()) { result ->
+        when (result) {
+            is QRResult.QRSuccess -> {
+                val scannedContent = result.content.rawValue
+                if (scannedContent != null) {
+                    if (scannedContent.startsWith("upi://")) {
+                        val amountInput = findViewById<EditText>(R.id.amountInput)
+                        val labelInput = findViewById<EditText>(R.id.labelInput)
+                        if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString().isEmpty()) {
+                            amountInput.error = "Please Enter a valid amount"
+                        } else if (labelInput == null || labelInput.text.isEmpty() || labelInput.text == null || labelInput.text.toString().isEmpty() || labelInput.text.toString().isBlank()) {
+                            labelInput.error = "Please Enter a Label"
+                        } else {
+                            val amount = amountInput.text.toString().toDouble()
+                            val label = labelInput.text.toString()
+                            launchUPIUrl(scannedContent, amount)
+                        }
+                    } else {
+                        Toast.makeText(this, "Not a UPI QR code: $scannedContent", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            is QRResult.QRUserCanceled -> {
+                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
+            }
+            is QRResult.QRMissingPermission -> {
+                Toast.makeText(this, "Camera permission is required to scan QR codes", Toast.LENGTH_LONG).show()
+            }
+            is QRResult.QRError -> {
+                Toast.makeText(this, "Error scanning QR code: ${result.exception.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,15 +64,13 @@ class AddTransactionActivity : AppCompatActivity() {
         showKeyboard(amountEditText)
 
         val scanQRButton: Button = findViewById(R.id.scanQRButton)
-        val addTransaction: Button = findViewById(R.id.addTransaction);
+        val addTransaction: Button = findViewById(R.id.addTransaction)
         val typeSpinner: Spinner = findViewById(R.id.typeSpinner)
 
         typeSpinner.setSelection(0) // Set "Expense" as the default selection
 
         typeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>, view: View?, position: Int, id: Long
-            ) {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val selectedType = parent.getItemAtPosition(position).toString()
                 if (selectedType == "Expense") {
                     scanQRButton.visibility = View.VISIBLE
@@ -68,76 +95,28 @@ class AddTransactionActivity : AppCompatActivity() {
             addTransaction()
         }
         scanQRButton.setOnClickListener {
-            val labelInput = findViewById<EditText>(R.id.labelInput);
-            val amountInput = findViewById<EditText>(R.id.amountInput);
-            if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString()
-                    .isEmpty()
-            ) {
+            val labelInput = findViewById<EditText>(R.id.labelInput)
+            val amountInput = findViewById<EditText>(R.id.amountInput)
+            if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString().isEmpty()) {
                 amountInput.error = "Please Enter a valid amount"
-            } else if (labelInput == null || labelInput.text.isEmpty() || labelInput.text == null || labelInput.text.toString()
-                    .isEmpty() || labelInput.text.toString().isBlank()
-            ) {
+            } else if (labelInput == null || labelInput.text.isEmpty() || labelInput.text == null || labelInput.text.toString().isEmpty() || labelInput.text.toString().isBlank()) {
                 labelInput.error = "Please Enter a Label"
             } else {
-                val integrator = IntentIntegrator(this)
-                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-                integrator.setPrompt("Scan a UPI QR code")
-                integrator.setCameraId(0) // Use a specific camera of the device
-                integrator.setBeepEnabled(true)
-                integrator.setOrientationLocked(true)
-                integrator.setBarcodeImageEnabled(true)
-                integrator.initiateScan()
+                scanQRCodeLauncher.launch(null)
             }
-        }
-    }
-
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val result: IntentResult =
-            IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        if (result != null) {
-            if (result.contents == null) {
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
-            } else {
-                val scannedContent = result.contents
-                if (scannedContent.startsWith("upi://")) {
-                    val amountInput = findViewById<EditText>(R.id.amountInput)
-                    val labelInput = findViewById<EditText>(R.id.labelInput)
-                    if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString()
-                            .isEmpty()
-                    ) {
-                        amountInput.error = "Please Enter a valid amount"
-                    } else if (labelInput == null || labelInput.text.isEmpty() || labelInput.text == null || labelInput.text.toString()
-                            .isEmpty() || labelInput.text.toString().isBlank()
-                    ) {
-                        labelInput.error = "Please Enter a Label"
-                    } else {
-                        val amount = amountInput.text.toString().toDouble()
-                        val label = labelInput.text.toString()
-                        launchUPIUrl(scannedContent, amount)
-                    }
-                } else {
-                    Toast.makeText(this, "Not a UPI QR code: $scannedContent", Toast.LENGTH_LONG)
-                        .show()
-                }
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
     private fun addTransaction(): Boolean {
-        val labelInput = findViewById<EditText>(R.id.labelInput);
-        val amountInput = findViewById<EditText>(R.id.amountInput);
+        val labelInput = findViewById<EditText>(R.id.labelInput)
+        val amountInput = findViewById<EditText>(R.id.amountInput)
         val label = labelInput.text.toString()
-        if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString()
-                .isEmpty()
-        ) {
+        if (amountInput == null || amountInput.text.isEmpty() || amountInput.text == null || amountInput.text.toString().isEmpty()) {
             amountInput.error = "Please Enter a valid amount"
         } else {
-            val typeSpinner = findViewById<Spinner>(R.id.typeSpinner);
-            val amount = amountInput.text.toString().toDouble();
-            val type = typeSpinner.selectedItem.toString();
+            val typeSpinner = findViewById<Spinner>(R.id.typeSpinner)
+            val amount = amountInput.text.toString().toDouble()
+            val type = typeSpinner.selectedItem.toString()
             if (label.isEmpty()) {
                 labelInput.error = "Please Enter a Label"
             } else {
@@ -160,7 +139,7 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun launchUPIUrl(url: String, amount: Double) {
-        var upiUrl = url;
+        var upiUrl = url
         if (!hasParameter(upiUrl, amountParam)) {
             upiUrl = "$upiUrl&am=$amount"
         }
@@ -172,20 +151,16 @@ class AddTransactionActivity : AppCompatActivity() {
                 val amountInput = findViewById<EditText>(R.id.amountInput)
                 amountInput.setText(extractedAmount.toString())
             } catch (e: Exception) {
-                Toast.makeText(this, "Error extracting amount: ${e.message}", Toast.LENGTH_LONG)
-                    .show()
+                Toast.makeText(this, "Error extracting amount: ${e.message}", Toast.LENGTH_LONG).show()
             }
             addTransaction()
         } else {
-            Toast.makeText(this, "No UPI app found to handle the request", Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(this, "No UPI app found to handle the request", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun insert(transaction: Transaction) {
-        var db = Room.databaseBuilder(
-            this, AppDatabase::class.java, "transaction"
-        ).build()
+        val db = Room.databaseBuilder(this, AppDatabase::class.java, "transaction").build()
 
         GlobalScope.launch {
             db.transactionDao().insertAll(transaction)
