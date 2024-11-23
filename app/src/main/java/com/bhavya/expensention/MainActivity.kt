@@ -17,6 +17,17 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
+import android.widget.Button
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
     private lateinit var deletedTransaction: Transaction
@@ -74,6 +85,50 @@ class MainActivity : AppCompatActivity() {
         addButton.setOnClickListener {
             val intent = Intent(this, AddTransactionActivity::class.java)
             startActivity(intent)
+        }
+        val exportButton = findViewById<Button>(R.id.exportButton)
+        exportButton.setOnClickListener {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+                } else {
+                    exportTransactionsToCSV()
+                }
+            } else {
+                exportTransactionsToCSV()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            exportTransactionsToCSV()
+        } else {
+            Toast.makeText(this, "Permission denied to write to external storage", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun exportTransactionsToCSV() {
+        val csvHeader = "Label,Amount,Type\n"
+        val csvData = StringBuilder(csvHeader)
+
+        transactions.forEach { transaction ->
+            val type = if (transaction.isExpense) "Expense" else "Income"
+            csvData.append("\"${transaction.label}\",${(if (transaction.isExpense) -1 else 1) * transaction.amount},${type}\n")
+        }
+
+        val fileName = "transactions.csv"
+        val filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + fileName
+        val file = File(filePath)
+
+        try {
+            val fileWriter = FileWriter(file)
+            fileWriter.write(csvData.toString())
+            fileWriter.close()
+            Toast.makeText(this, "CSV file saved to $filePath", Toast.LENGTH_LONG).show()
+        } catch (e: IOException) {
+            Toast.makeText(this, "Error saving CSV file: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
