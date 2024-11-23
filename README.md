@@ -18,7 +18,7 @@ Unlike other apps that require you to note down expenses separately after making
 
 ### Option 1: Install via APK
 
-1. Download the APK from the [App-Release page](https://github.com/bhavyammodi/Expensention/releases/tag/App-Release).
+1. Download the APK from the [App-Release page](https://github.com/bhavyammodi/Expensention/releases).
 2. Install the APK on your Android device.
 
 ### Option 2: Build from Source
