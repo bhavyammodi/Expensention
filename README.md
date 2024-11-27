@@ -2,6 +2,15 @@
 
 Expensention is an Android application designed to streamline expense and income management. What sets Expensention apart from other apps is its ability to first input the transaction amount and, when UPI is selected, scan the QR code before automatically redirecting the user to their preferred UPI app. This eliminates the need to separately log expenses and handle payments across different apps.
 
+## Screenshots
+
+<div style="display: flex;">
+    <img src="https://github.com/user-attachments/assets/af903c2e-d046-4cfa-8150-ad3b9797bc16" width="24%" style="margin-right: 10px;">
+    <img src="https://github.com/user-attachments/assets/6a8a8205-d46c-41a7-b529-9f855b5fa3ad" width="24%" style="margin-right: 10px;">
+    <img src="https://github.com/user-attachments/assets/b8e2d655-a78f-4c7a-a0de-75c3a8f83f99" width="24%" style="margin-right: 10px;">
+    <img src="https://github.com/user-attachments/assets/85f0bf12-bbe6-4a73-930c-4484faba3724" width="24%">
+</div>
+
 ## Key Features
 
 - **Unified Transaction Management**: Manage all your transactions—expenses or income—within one app.
