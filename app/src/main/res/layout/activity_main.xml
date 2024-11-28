@@ -135,9 +135,10 @@
             android:id="@+id/recyclerview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_above="@+id/addButton"
             android:layout_below="@id/recyclerview_title"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp" />
+            android:layout_marginTop="10dp"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/addButton"

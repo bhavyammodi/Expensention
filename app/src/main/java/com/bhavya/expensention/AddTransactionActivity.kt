@@ -3,10 +3,12 @@ package com.bhavya.expensention
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import com.google.android.material.internal.ViewUtils.showKeyboard
@@ -14,6 +16,7 @@ import io.github.g00fy2.quickie.QRResult
 import io.github.g00fy2.quickie.ScanQRCode
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class AddTransactionActivity : AppCompatActivity() {
     private val amountParam = "am"
@@ -107,6 +110,7 @@ class AddTransactionActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun addTransaction(): Boolean {
         val labelInput = findViewById<EditText>(R.id.labelInput)
         val amountInput = findViewById<EditText>(R.id.amountInput)
@@ -120,7 +124,8 @@ class AddTransactionActivity : AppCompatActivity() {
             if (label.isEmpty()) {
                 labelInput.error = "Please Enter a Label"
             } else {
-                insert(Transaction(0, label, amount, type == "Expense"))
+                val timeNow = Date().time
+                insert(Transaction(0, label, amount, type == "Expense", timeNow))
                 return true
             }
         }
