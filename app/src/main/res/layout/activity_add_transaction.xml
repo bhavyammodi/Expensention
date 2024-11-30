@@ -63,6 +63,7 @@
                 android:drawableStart="@drawable/ic_label"
                 android:drawablePadding="12dp"
                 android:inputType="text"
+                android:maxLength="80"
                 android:maxLines="1" />
 
             <Spinner

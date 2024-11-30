@@ -5,4 +5,5 @@
     <color name="red">#EB0E59</color>
     <color name="green">#68BD06</color>
     <color name="blue">#05BDEA</color>
+    <color name="snackbar_background">#323232</color>
 </resources>

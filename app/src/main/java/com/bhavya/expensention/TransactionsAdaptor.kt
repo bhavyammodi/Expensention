@@ -7,25 +7,37 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class TransactionsAdaptor(private var transactions: List<Transaction>) :
-    RecyclerView.Adapter<TransactionsAdaptor.TransactionHolder>() {
-    class TransactionHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val label: TextView = view.findViewById(R.id.label)
-        val amount: TextView = view.findViewById(R.id.amount)
+    RecyclerView.Adapter<TransactionsAdaptor.TransactionViewHolder>() {
+
+    class TransactionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val label: TextView = itemView.findViewById(R.id.label)
+        val amount: TextView = itemView.findViewById(R.id.amount)
+        val date: TextView = itemView.findViewById(R.id.date)
+        val time: TextView = itemView.findViewById(R.id.time)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionHolder {
-        val view =
-            LayoutInflater.from(parent.context).inflate(R.layout.transaction_layout, parent, false)
-        return TransactionHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.transaction_layout, parent, false)
+        return TransactionViewHolder(view)
     }
+
 
     override fun getItemCount(): Int {
         return transactions.size
     }
 
-    override fun onBindViewHolder(holder: TransactionHolder, position: Int) {
+    private fun convertMillisToDateTime(millis: Long): String {
+        val sdf = SimpleDateFormat("dd-MM-yyyy hh:mm:ss a")
+        val date = Date(millis)
+        return (sdf.format(date)).toUpperCase()
+    }
+
+    override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
         val transaction = transactions[position]
         val context = holder.amount.context
 
@@ -38,10 +50,14 @@ class TransactionsAdaptor(private var transactions: List<Transaction>) :
             holder.amount.setTextColor(ContextCompat.getColor(context, R.color.green))
         }
         holder.label.text = transaction.label
+        val dateTime = convertMillisToDateTime(transaction.time)
+        val dateTimeParts = dateTime.split(" ")
+        holder.date.text = dateTimeParts[0]
+        holder.time.text = "${dateTimeParts[1]} ${dateTimeParts[2]}"
     }
 
-    fun setData(transactions: List<Transaction>){
-        this.transactions = transactions
+    fun setData(newTransactions: List<Transaction>) {
+        transactions = newTransactions
         notifyDataSetChanged()
     }
 }

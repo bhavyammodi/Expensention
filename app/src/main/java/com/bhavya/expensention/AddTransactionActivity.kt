@@ -37,7 +37,7 @@ class AddTransactionActivity : AppCompatActivity() {
                         } else {
                             val amount = amountInput.text.toString().toDouble()
                             val label = labelInput.text.toString()
-                            launchUPIUrl(scannedContent, amount)
+                            launchUPIUrl(scannedContent, amount, label)
                         }
                     } else {
                         Toast.makeText(this, "Not a UPI QR code: $scannedContent", Toast.LENGTH_LONG).show()
@@ -124,7 +124,7 @@ class AddTransactionActivity : AppCompatActivity() {
             if (label.isEmpty()) {
                 labelInput.error = "Please Enter a Label"
             } else {
-                val timeNow = Date().time
+                val timeNow = System.currentTimeMillis()
                 insert(Transaction(0, label, amount, type == "Expense", timeNow))
                 return true
             }
@@ -143,10 +143,13 @@ class AddTransactionActivity : AppCompatActivity() {
         return url.substring(amountIndex + 4, amountEndIndex).toDouble()
     }
 
-    private fun launchUPIUrl(url: String, amount: Double) {
+    private fun launchUPIUrl(url: String, amount: Double, label: String) {
         var upiUrl = url
         if (!hasParameter(upiUrl, amountParam)) {
-            upiUrl = "$upiUrl&am=$amount"
+            upiUrl = "$upiUrl&$amountParam=$amount"
+        }
+        if (!hasParameter(upiUrl, noteParam)) {
+            upiUrl = "$upiUrl&$noteParam=$label"
         }
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(upiUrl))
         if (intent.resolveActivity(packageManager) != null) {
