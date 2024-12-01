@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
-            android:hint="Notes"
+            android:hint="Description"
             app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -63,6 +63,7 @@
                 android:drawableStart="@drawable/ic_label"
                 android:drawablePadding="12dp"
                 android:inputType="text"
+                android:maxLength="80"
                 android:maxLines="1" />
 
             <Spinner

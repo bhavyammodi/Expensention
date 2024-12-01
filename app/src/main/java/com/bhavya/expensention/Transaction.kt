@@ -9,5 +9,6 @@ data class Transaction(
     val label: String,
     val amount: Double,
     val isExpense: Boolean,
+    val time: Long
 ) {
 }

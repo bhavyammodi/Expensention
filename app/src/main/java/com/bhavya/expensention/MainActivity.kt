@@ -22,12 +22,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import android.view.Gravity
 import android.widget.Button
 import android.widget.Toast
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class MainActivity : AppCompatActivity() {
     private lateinit var deletedTransaction: Transaction
@@ -61,6 +65,9 @@ class MainActivity : AppCompatActivity() {
             adapter = transactionsAdaptor
             layoutManager = linearLayoutManager
         }
+        recyclerView.post {
+            recyclerView.scrollToPosition(transactions.size - 1)
+        }
 
         // swipe to delete
         val itemTouchHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
@@ -89,8 +96,13 @@ class MainActivity : AppCompatActivity() {
         val exportButton = findViewById<Button>(R.id.exportButton)
         exportButton.setOnClickListener {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1
+                    )
                 } else {
                     exportTransactionsToCSV()
                 }
@@ -100,26 +112,52 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             exportTransactionsToCSV()
         } else {
-            Toast.makeText(this, "Permission denied to write to external storage", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this, "Permission denied to write to external storage", Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
+    private fun convertMillisToDateTime(millis: Long): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        val date = Date(millis)
+        return sdf.format(date)
+    }
+
     private fun exportTransactionsToCSV() {
-        val csvHeader = "Label,Amount,Type\n"
+        val csvHeader = "Label,Amount,Type,Time\n"
         val csvData = StringBuilder(csvHeader)
 
         transactions.forEach { transaction ->
             val type = if (transaction.isExpense) "Expense" else "Income"
-            csvData.append("\"${transaction.label}\",${(if (transaction.isExpense) -1 else 1) * transaction.amount},${type}\n")
+            csvData.append(
+                "\"${transaction.label}\",${
+                    (if (transaction.isExpense) -1 else 1) *
+                            transaction.amount
+                },${type},\"${convertMillisToDateTime(transaction.time)}\"\n"
+            )
         }
 
-        val fileName = "transactions.csv"
-        val filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + fileName
+        val fileName = "transactions-${
+            convertMillisToDateTime(System.currentTimeMillis()).replace(
+                ":",
+                "_"
+            )
+        }.csv"
+        val directoryPath =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + "Expensention"
+        val directory = File(directoryPath)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val filePath = directoryPath + File.separator + fileName
         val file = File(filePath)
 
         try {
@@ -158,25 +196,47 @@ class MainActivity : AppCompatActivity() {
         expense.text = "Rs %.2f".format(-expenseAmount)
     }
 
-    private fun undoDelete()
-    {
+    private fun undoDelete() {
         GlobalScope.launch {
             db.transactionDao().insertAll(deletedTransaction)
             fetchAll()
         }
     }
 
-    private fun showSnackbar()
-    {
+    private fun showSnackbar() {
         val view = findViewById<View>(R.id.coordinator)
-        val snackbar = Snackbar.make(view, "Transaction Deleted!", Snackbar.LENGTH_LONG)
-        snackbar.setAction("Undo")
-        {
+        val snackbar = Snackbar.make(view, "", Snackbar.LENGTH_LONG)
+
+        // Inflate custom view
+        val customView = layoutInflater.inflate(R.layout.snackbar, null)
+        val snackbarLayout = snackbar.view as Snackbar.SnackbarLayout
+        snackbarLayout.setPadding(0, 0, 0, 0)
+
+        // Set text and action
+        val snackbarText = customView.findViewById<TextView>(R.id.snackbar_text)
+        snackbarText.text = "Transaction Deleted!"
+        val snackbarAction = customView.findViewById<Button>(R.id.snackbar_action)
+        snackbarAction.text = "Undo"
+        snackbarAction.setOnClickListener {
             undoDelete()
+            snackbar.dismiss()
         }
-            .setActionTextColor(ContextCompat.getColor(this, R.color.green))
-            .setTextColor(ContextCompat.getColor(this, R.color.red))
-            .show()
+
+        // Add custom view to Snackbar layout
+        snackbarLayout.addView(customView, 0)
+
+        // Adjust Snackbar position and width
+        val addButton = findViewById<FloatingActionButton>(R.id.addButton)
+        addButton.post {
+            val addButtonLeft = addButton.left
+            val snackbarWidth = addButtonLeft - view.left - 50
+            val params = snackbar.view.layoutParams as CoordinatorLayout.LayoutParams
+            params.width = snackbarWidth
+            params.height = addButton.height - 20
+            params.gravity = Gravity.BOTTOM or Gravity.START
+            snackbar.view.layoutParams = params
+            snackbar.show()
+        }
     }
 
     private fun deleteTransaction(transaction: Transaction) {
