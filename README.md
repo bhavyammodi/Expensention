@@ -53,6 +53,7 @@ Unlike other apps that require you to note down expenses separately after making
 2. **Payment Medium**: Identify the payment method used — UPI app or cash. (Saving UPI url for now, need to store the App name)
 3. **~Export~/Import to CSV**: Provide an option to export transaction data to CSV format and import it back for seamless backup and data migration. (Export is implemented)
 4. **Retry**: Option to retry the transaction in case it doesn't go through.
+5. **Edit Menu**: Menu to edit each transaction
 
 ## Dependencies
 
