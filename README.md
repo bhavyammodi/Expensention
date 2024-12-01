@@ -49,9 +49,10 @@ Unlike other apps that require you to note down expenses separately after making
 
 ## Future Features
 
-1. **Time of the Transactions**: Track and display the exact time when each transaction was made.
-2. **Payment Medium**: Identify the payment method used — UPI app, cash, or card.
-3. **Export/Import to CSV**: Provide an option to export transaction data to CSV format and import it back for seamless backup and data migration.
+1. ~**Time of the Transactions**: Track and display the exact time when each transaction was made~.
+2. **Payment Medium**: Identify the payment method used — UPI app or cash. (Saving UPI url for now, need to store the App name)
+3. **~Export~/Import to CSV**: Provide an option to export transaction data to CSV format and import it back for seamless backup and data migration. (Export is implemented)
+4. **Retry**: Option to retry the transaction in case it doesn't go through.
 
 ## Dependencies
 
