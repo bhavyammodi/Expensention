@@ -9,7 +9,6 @@ data class Transaction(
     val label: String,
     val amount: Double,
     val isExpense: Boolean,
-    val time: Long,
-    val classification: String = "Others" // Default to "Others" for backward compatibility
+    val time: Long
 ) {
 }

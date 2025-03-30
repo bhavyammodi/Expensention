@@ -21,17 +21,22 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
-import android.provider.Settings
 import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.math.abs
+import androidx.appcompat.widget.Toolbar
 
 class MainActivity : AppCompatActivity() {
     private lateinit var deletedTransaction: Transaction
@@ -44,6 +49,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = ""
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -58,7 +68,7 @@ class MainActivity : AppCompatActivity() {
 
         db = Room.databaseBuilder(
             this, AppDatabase::class.java, "transaction"
-        ).build()
+        ).addMigrations(AppDatabase.MIGRATION_1_2).build()
 
         val recyclerView: RecyclerView = findViewById(R.id.recyclerview)
         recyclerView.apply {
@@ -93,21 +103,57 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, AddTransactionActivity::class.java)
             startActivity(intent)
         }
-        val exportButton = findViewById<Button>(R.id.exportButton)
-        exportButton.setOnClickListener {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                if (ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    ActivityCompat.requestPermissions(
-                        this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1
-                    )
-                } else {
-                    exportTransactionsToCSV()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 2 && resultCode == RESULT_OK) {
+            // check if file extension is csv
+            if (data?.data?.path?.endsWith(".csv") == true) {
+                data?.data?.let { uri ->
+                    val inputStream = contentResolver.openInputStream(uri)
+                    val reader = BufferedReader(InputStreamReader(inputStream))
+                    val transactions = mutableListOf<Transaction>()
+
+                    reader.useLines { lines ->
+                        lines.drop(1).forEach { line ->
+                            val tokens = line.split(",")
+                            if (tokens.size == 5) {
+                                val label = tokens[0].trim('"')
+                                val amount = abs(tokens[1].toDouble())
+                                val isExpense = tokens[2] == "Expense"
+                                val time = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(
+                                    tokens[3].trim('"')
+                                ).time
+                                val classification = tokens[4].trim('"')
+                                transactions.add(
+                                    Transaction(
+                                        0, label, amount, isExpense, time, classification
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    insertTransactions(transactions)
                 }
             } else {
-                exportTransactionsToCSV()
+                Toast.makeText(
+                    this, "Invalid file format. Please select a CSV file.", Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun insertTransactions(transactions: List<Transaction>) {
+        GlobalScope.launch {
+            for (transaction in transactions) {
+                db.transactionDao().insertAll(transaction)
+            }
+            runOnUiThread {
+                Toast.makeText(
+                    this@MainActivity, "Data restored successfully", Toast.LENGTH_LONG
+                ).show()
+                fetchAll()
             }
         }
     }
@@ -131,44 +177,6 @@ class MainActivity : AppCompatActivity() {
         return sdf.format(date)
     }
 
-    private fun exportTransactionsToCSV() {
-        val csvHeader = "Label,Amount,Type,Time\n"
-        val csvData = StringBuilder(csvHeader)
-
-        transactions.forEach { transaction ->
-            val type = if (transaction.isExpense) "Expense" else "Income"
-            csvData.append(
-                "\"${transaction.label}\",${
-                    (if (transaction.isExpense) -1 else 1) *
-                            transaction.amount
-                },${type},\"${convertMillisToDateTime(transaction.time)}\"\n"
-            )
-        }
-
-        val fileName = "transactions-${
-            convertMillisToDateTime(System.currentTimeMillis()).replace(
-                ":",
-                "_"
-            )
-        }.csv"
-        val directoryPath =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + "Expensention"
-        val directory = File(directoryPath)
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-        val filePath = directoryPath + File.separator + fileName
-        val file = File(filePath)
-
-        try {
-            val fileWriter = FileWriter(file)
-            fileWriter.write(csvData.toString())
-            fileWriter.close()
-            Toast.makeText(this, "CSV file saved to $filePath", Toast.LENGTH_LONG).show()
-        } catch (e: IOException) {
-            Toast.makeText(this, "Error saving CSV file: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
 
     private fun fetchAll() {
         GlobalScope.launch {
@@ -252,5 +260,83 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         fetchAll()
+    }
+
+    // MainActivity.kt
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_export -> {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                    if (ContextCompat.checkSelfPermission(
+                            this, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        ActivityCompat.requestPermissions(
+                            this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1
+                        )
+                    } else {
+                        exportTransactionsToCSV()
+                    }
+                } else {
+                    exportTransactionsToCSV()
+                }
+                true
+            }
+
+            R.id.action_restore -> {
+                readCSVAndRestoreData()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun exportTransactionsToCSV() {
+        val csvHeader = "Label,Amount,Type,Time,Classification\n"
+        val csvData = StringBuilder(csvHeader)
+
+        transactions.forEach { transaction ->
+            val type = if (transaction.isExpense) "Expense" else "Income"
+            csvData.append(
+                "\"${transaction.label}\",${
+                    (if (transaction.isExpense) -1 else 1) * transaction.amount
+                },${type},\"${convertMillisToDateTime(transaction.time)}\"," + "\"${transaction.classification}\"\n"
+            )
+        }
+
+        val fileName = "transactions-${
+            convertMillisToDateTime(System.currentTimeMillis()).replace(
+                ":", "_"
+            )
+        }.csv"
+        val directoryPath =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + "Expensention"
+        val directory = File(directoryPath)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val filePath = directoryPath + File.separator + fileName
+        val file = File(filePath)
+
+        try {
+            val fileWriter = FileWriter(file)
+            fileWriter.write(csvData.toString())
+            fileWriter.close()
+            Toast.makeText(this, "CSV file saved to $filePath", Toast.LENGTH_LONG).show()
+        } catch (e: IOException) {
+            Toast.makeText(this, "Error saving CSV file: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    private fun readCSVAndRestoreData() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "*/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        startActivityForResult(intent, 2)
     }
 }
