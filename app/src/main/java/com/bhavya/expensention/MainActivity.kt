@@ -18,6 +18,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
@@ -27,11 +28,14 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
     private lateinit var deletedTransaction: Transaction
@@ -58,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         db = Room.databaseBuilder(
             this, AppDatabase::class.java, "transaction"
-        ).build()
+        ).addMigrations(AppDatabase.MIGRATION_1_2).build()
 
         val recyclerView: RecyclerView = findViewById(R.id.recyclerview)
         recyclerView.apply {
@@ -110,6 +114,71 @@ class MainActivity : AppCompatActivity() {
                 exportTransactionsToCSV()
             }
         }
+
+        val restoreDataButton: Button = findViewById(R.id.restoreButton)
+        restoreDataButton.setOnClickListener {
+            readCSVAndRestoreData()
+        }
+    }
+
+    private fun readCSVAndRestoreData() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "*/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        startActivityForResult(intent, 2)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 2 && resultCode == RESULT_OK) {
+            // check if file extension is csv
+            if (data?.data?.path?.endsWith(".csv") == true) {
+                data?.data?.let { uri ->
+                    val inputStream = contentResolver.openInputStream(uri)
+                    val reader = BufferedReader(InputStreamReader(inputStream))
+                    val transactions = mutableListOf<Transaction>()
+
+                    reader.useLines { lines ->
+                        lines.drop(1).forEach { line ->
+                            val tokens = line.split(",")
+                            if (tokens.size == 5) {
+                                val label = tokens[0].trim('"')
+                                val amount = abs(tokens[1].toDouble())
+                                val isExpense = tokens[2] == "Expense"
+                                val time = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(
+                                    tokens[3].trim('"')
+                                ).time
+                                val classification = tokens[4].trim('"')
+                                transactions.add(
+                                    Transaction(
+                                        0, label, amount, isExpense, time, classification
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    insertTransactions(transactions)
+                }
+            } else {
+                Toast.makeText(
+                    this, "Invalid file format. Please select a CSV file.", Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun insertTransactions(transactions: List<Transaction>) {
+        GlobalScope.launch {
+            for (transaction in transactions) {
+                db.transactionDao().insertAll(transaction)
+            }
+            runOnUiThread {
+                Toast.makeText(
+                    this@MainActivity, "Data restored successfully", Toast.LENGTH_LONG
+                ).show()
+                fetchAll()
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -132,23 +201,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun exportTransactionsToCSV() {
-        val csvHeader = "Label,Amount,Type,Time\n"
+        val csvHeader = "Label,Amount,Type,Time,Classification\n"
         val csvData = StringBuilder(csvHeader)
 
         transactions.forEach { transaction ->
             val type = if (transaction.isExpense) "Expense" else "Income"
             csvData.append(
                 "\"${transaction.label}\",${
-                    (if (transaction.isExpense) -1 else 1) *
-                            transaction.amount
-                },${type},\"${convertMillisToDateTime(transaction.time)}\"\n"
+                    (if (transaction.isExpense) -1 else 1) * transaction.amount
+                },${type},\"${convertMillisToDateTime(transaction.time)}\"," + "\"${transaction.classification}\"\n"
             )
         }
 
         val fileName = "transactions-${
             convertMillisToDateTime(System.currentTimeMillis()).replace(
-                ":",
-                "_"
+                ":", "_"
             )
         }.csv"
         val directoryPath =

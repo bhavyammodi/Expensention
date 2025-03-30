@@ -12,7 +12,7 @@ interface TransactionDao {
     fun getAll(): List<Transaction>
 
     @Insert
-    fun insertAll (vararg transactions: Transaction)
+    fun insertAll(vararg transactions: Transaction)
 
     @Delete
     fun delete(transaction: Transaction)

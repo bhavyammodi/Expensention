@@ -18,8 +18,8 @@ class TransactionsAdaptor(private var transactions: List<Transaction>) :
         val amount: TextView = itemView.findViewById(R.id.amount)
         val date: TextView = itemView.findViewById(R.id.date)
         val time: TextView = itemView.findViewById(R.id.time)
+        val classification: TextView = itemView.findViewById(R.id.classificationTextView)
     }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.transaction_layout, parent, false)
@@ -54,6 +54,7 @@ class TransactionsAdaptor(private var transactions: List<Transaction>) :
         val dateTimeParts = dateTime.split(" ")
         holder.date.text = dateTimeParts[0]
         holder.time.text = "${dateTimeParts[1]} ${dateTimeParts[2]}"
+        holder.classification.text = transaction.classification
     }
 
     fun setData(newTransactions: List<Transaction>) {

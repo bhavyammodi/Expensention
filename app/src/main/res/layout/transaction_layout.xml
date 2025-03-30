@@ -54,6 +54,12 @@
                 android:text="12:10 PM"
                 android:textSize="14sp" />
 
+            <TextView
+                android:id="@+id/classificationTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Classification"
+                android:textStyle="italic" />
         </LinearLayout>
     </LinearLayout>
 
