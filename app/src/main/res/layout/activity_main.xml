@@ -6,6 +6,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"> <!-- Add margin here -->
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+    </com.google.android.material.appbar.AppBarLayout>
+
     <RelativeLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
@@ -38,38 +51,38 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/export_restore_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="1dp"
-            android:layout_marginEnd="15dp"
-            android:orientation="vertical">
+        <!--        <LinearLayout-->
+        <!--            android:id="@+id/export_restore_layout"-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_alignParentTop="true"-->
+        <!--            android:layout_alignParentEnd="true"-->
+        <!--            android:layout_marginTop="1dp"-->
+        <!--            android:layout_marginEnd="15dp"-->
+        <!--            android:orientation="vertical">-->
 
-            <Button
-                android:id="@+id/exportButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginBottom="1dp"
-                android:text="Export to CSV" />
+        <!--            <Button-->
+        <!--                android:id="@+id/exportButton"-->
+        <!--                android:layout_width="wrap_content"-->
+        <!--                android:layout_height="wrap_content"-->
+        <!--                android:layout_marginStart="10dp"-->
+        <!--                android:layout_marginBottom="1dp"-->
+        <!--                android:text="Export to CSV" />-->
 
-            <Button
-                android:id="@+id/restoreButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="1dp"
-                android:layout_marginBottom="1dp"
-                android:text="Restore from CSV" />
-        </LinearLayout>
+        <!--            <Button-->
+        <!--                android:id="@+id/restoreButton"-->
+        <!--                android:layout_width="wrap_content"-->
+        <!--                android:layout_height="wrap_content"-->
+        <!--                android:layout_marginStart="1dp"-->
+        <!--                android:layout_marginBottom="1dp"-->
+        <!--                android:text="Restore from CSV" />-->
+        <!--        </LinearLayout>-->
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/dashboard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/export_restore_layout"
+            android:layout_below="@+id/balance_layout"
             android:layout_marginStart="10dp"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="10dp"
